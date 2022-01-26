@@ -2,10 +2,24 @@ Package: sdmProfiling
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Author: Charlie Marsh
+Maintainer: Charlie Marsh <charlie.marsh@mailbox.org>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
+Depends:
+    raster (>= 2.4-20),
+    R (>= 3.0.0),
+    sp (>= 1.2-0),
+    gstat,
+    randomForest
+Imports:
+    graphics,
+    grDevices,
+    methods,
+    stats
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
