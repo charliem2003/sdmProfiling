@@ -18,18 +18,20 @@
 ###
 ####################################################################################################
 
+#' @importFrom gstat gstat vgm
+#' @importFrom stats predict
 create_env_samp <- function(envBase,
                             model    = "Sph",
                             psill    = 1.5,
                             rangeFun = "vrangeFun",
                             propSamp = 0.5,
                             dep1     = 1) {
-  require(gstat)
 
   ### create random subset to base kriging on
-  subSamp <- envBase[sample.int(n = nrow(envBase), size = round(nrow(envBase) * propSamp, 0)), ]
+  subSamp <- envBase[sample.int(n = nrow(envBase),
+                                size = round(nrow(envBase) * propSamp, 0)), ]
 
-  ### create a few other random varaible based on the subset of the base variable
+  ### create a few other random variable based on the subset of the base variable
   gEnvSamp <- gstat(formula = sim1 ~ 1,   # note that sim1 is the dependent
                     locations = ~x + y,
                     dummy = FALSE,

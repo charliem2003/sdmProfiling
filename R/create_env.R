@@ -16,12 +16,12 @@
 ###
 ####################################################################################################
 
+#' @importFrom gstat gstat vgm
+#' @importFrom stats predict
 create_env <- function(cellDims = c(100, 100),
                        model    = "Sph",
                        psill    = 1.5,
                        rangeFun = "vrangeFun") {
-  require(gstat)
-
   ### create structure
   xy <- expand.grid(1:cellDims[1],
                     1:cellDims[2])
@@ -39,5 +39,6 @@ create_env <- function(cellDims = c(100, 100),
 
   ### predict across whole grid
   env <- predict(gEnv, newdata = xy, nsim = 1)
+
   return(env)
 }
