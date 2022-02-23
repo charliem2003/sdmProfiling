@@ -27,18 +27,24 @@ create_env <- function(cellDims = c(100, 100),
                     1:cellDims[2])
   names(xy) <- c("x","y")
 
-  ### the gstat model and prediction for the entire grid
-  gEnv <- gstat(formula = z ~ 1,
-                locations = ~x + y,
-                dummy = TRUE,
-                beta = 1,
-                model = vgm(psill = psill,
-                            model = model,
-                            range = round(do.call(rangeFun, list()))),
-                nmax = 20)
+  ### sumEnv is for error catching when NAs are sometimes predicted
+  sumEnv <- NA
+  while(is.na(sumEnv)) {
+    ### the gstat model and prediction for the entire grid
+    gEnv <- gstat(formula = z ~ 1,
+                  locations = ~x + y,
+                  dummy = TRUE,
+                  beta = 1,
+                  model = vgm(psill = psill,
+                              model = model,
+                              range = round(do.call(rangeFun, list()))),
+                  nmax = 20)
 
-  ### predict across whole grid
-  env <- predict(gEnv, newdata = xy, nsim = 1)
+    ### predict across whole grid
+    suppressWarnings(env <- predict(gEnv, newdata = xy,
+                                    nsim = 1, debug.level = 0))
+    sumEnv <- sum(env$sim1)
+  }
 
   return(env)
 }

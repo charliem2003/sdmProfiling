@@ -108,8 +108,9 @@ create_env_nsets <- function(cellDims = c(100, 100),
                              propSamp = 0.25) {
   allSets <- list()
   for(set in 1:length(sets)) {
-    print(paste("set", set))
-    envSet <- create_env_set(cellDims = c(100,100),
+    print(paste0("Generating environmental variable set ", set,
+                 ": ", sets[set], " variables"))
+    envSet <- create_env_set(cellDims = cellDims,
                              nPerSet  = sets[set],
                              model    = model,
                              psill    = psill,

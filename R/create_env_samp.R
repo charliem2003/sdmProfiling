@@ -27,23 +27,29 @@ create_env_samp <- function(envBase,
                             propSamp = 0.5,
                             dep1     = 1) {
 
-  ### create random subset to base kriging on
-  subSamp <- envBase[sample.int(n = nrow(envBase),
-                                size = round(nrow(envBase) * propSamp, 0)), ]
+  ### sumEnv is for error catching when NAs are sometimes predicted
+  sumEnv <- NA
+  while(is.na(sumEnv)) {
+    ### create random subset to base kriging on
+    subSamp <- envBase[sample.int(n = nrow(envBase),
+                                  size = round(nrow(envBase) * propSamp, 0)), ]
 
-  ### create a few other random variable based on the subset of the base variable
-  gEnvSamp <- gstat(formula = sim1 ~ 1,   # note that sim1 is the dependent
-                    locations = ~x + y,
-                    dummy = FALSE,
-                    beta = 1,
-                    model = vgm(psill = psill * dep1,
-                                model = model,
-                                range = round(do.call(rangeFun, list()))),
-                    nmax = 20,
-                    data = subSamp) # the data is the subset
+    ### create a few other random variable based on the subset of the base variable
+    gEnvSamp <- gstat(formula = sim1 ~ 1,   # note that sim1 is the dependent
+                      locations = ~x + y,
+                      dummy = FALSE,
+                      beta = 1,
+                      model = vgm(psill = psill * dep1,
+                                  model = model,
+                                  range = round(do.call(rangeFun, list()))),
+                      nmax = 20,
+                      data = subSamp) # the data is the subset
 
-  ### predcit for the full grid
-  env <- predict(gEnvSamp, newdata = envBase, nsim = 1)
+    ### predict for the full grid
+    suppressWarnings(env <- predict(gEnvSamp, newdata = envBase,
+                                    nsim = 1, debug.level = 0))
+    sumEnv <- sum(env$sim1)
+  }
 
   return(env)
 }

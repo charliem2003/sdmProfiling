@@ -51,6 +51,6 @@ test_that("Each layer has min = 0 and min = 1", {
 ### sum of values across all rasters
 test_that("Sum across all layer values = expected", {
   layerSums <- layerLoop(envSet, sum)
-  expect_equal(round(sum(layerSums), 2), 66931.57)
+  expect_equal(round(sum(layerSums), 2), 63396.23)
 })
 

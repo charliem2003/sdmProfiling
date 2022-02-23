@@ -187,18 +187,24 @@ create_sp <- function(envStack,
 
   ##############################################################################
   ### create probability of occurrenec surface
-  sp <- gstat(formula = sim1 ~ 1,
-              locations = ~x + y,
-              dummy = FALSE,
-              beta = 1,
-              model = vgm(psill = spPsill,
-                          model = spModel,
-                          range = spRange),
-              nmax = 20,
-              data = baseProb)
 
-  ### predict for the full grid
-  sp <- predict(sp, newdata = xy, nsim = 1)
+  ### sumSp is for error catching when NAs are sometimes predicted
+  sumSp <- NA
+  while(is.na(sumSp)) {
+    sp <- gstat(formula = sim1 ~ 1,
+                locations = ~x + y,
+                dummy = FALSE,
+                beta = 1,
+                model = vgm(psill = spPsill,
+                            model = spModel,
+                            range = spRange),
+                nmax = 20,
+                data = baseProb)
+
+    ### predict for the full grid
+    suppressWarnings(sp <- predict(sp, newdata = xy, nsim = 1, debug.level = 0))
+    sumSp <- sum(sp$sim1)
+  }
 
   ### standardize between 0 and 1
   sp$sim1 <- (sp$sim1 - min(sp$sim1, na.rm = TRUE)) /

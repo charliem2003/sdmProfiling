@@ -1,0 +1,40 @@
+create_env
+	- data frame
+	- col names
+	- rangeFun works
+
+create_env_samp
+	- data frame
+	- col names
+	- rangeFun works
+
+create_env_nsets
+	- raster stack
+	- names
+	- between 0 and 1
+	
+create_sp
+	- raster stack
+	- names
+	- between 0 and 1
+	- prevalence
+	
+	
+
+vrangeFun <- function() exp(runif(1, 1, 6))
+env <- create_env_nsets(cellDims = c(100, 100),
+                                    sets    = c(5, 4, 3, 1),
+                                    model    = "Sph",
+                                    psill    = 1.5,
+                                    dep1     = 1,     # multiplied against psill
+                                    rangeFun = "vrangeFun",
+                                    propSamp = 0.25)
+
+a <- create_sp(envStack = envStack,
+               spFun    = "x[1] * x[6] * x[8]",
+               spModel    = "Sph",
+               spPsill    = 1,
+               spRange = 20,
+               propSamp = 0.1,
+               prev     = 0.1)
+plot(a)
