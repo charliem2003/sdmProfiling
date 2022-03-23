@@ -11,7 +11,8 @@ sdmProfiling(
   envStack,
   sdmFun = "sdmModelling",
   sdmFunArgs = list(samples = NULL, envStack = NULL, modFormula = NULL, ntrees = 500),
-  parallel = FALSE
+  parallel = FALSE,
+  noCores = 2
 )
 }
 \arguments{
@@ -38,6 +39,12 @@ first list item. See the examples for how it works with the default random
 forest SDM function.}
 
 \item{parallel}{TRUE or FALSE to whether to run profiling on multiple cores}
+
+\item{noCores}{if parallel = TRUE then the number of cores to share jobs to.
+If noCores is larger than values retrieved through parallel::detectCores(),
+then the values from parallel::detectCores() (the total number of cores on
+the machine) will be used. Be wary of memory requirements when thinking
+about how many cores to use/}
 
 \item{modFormula}{model formula if using built-in random forest model}
 

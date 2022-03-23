@@ -26,7 +26,11 @@
 #' @param ntrees number of trees for generating forest if using built-in
 #'  random forest model
 #' @param parallel TRUE or FALSE to whether to run profiling on multiple cores
-# #' @param mc.cores if parallel = TRUE then the number of cores to share jobs to
+#' @param noCores if parallel = TRUE then the number of cores to share jobs to.
+#'  If noCores is larger than values retrieved through parallel::detectCores(),
+#'  then the values from parallel::detectCores() (the total number of cores on
+#'  the machine) will be used. Be wary of memory requirements when thinking
+#'  about how many cores to use/
 #'
 #' @return A data frame containing results of the SDM profile where each row is
 #'  an unsampled cell and eight columns:
@@ -89,6 +93,7 @@
 
 #' @export
 #' @importFrom utils txtProgressBar setTxtProgressBar
+#' @importFrom foreach `%dopar%`
 sdmProfiling <- function(unsampledCoords,
                          sampledCoords,
                          origSDM,
@@ -98,9 +103,15 @@ sdmProfiling <- function(unsampledCoords,
                                            envStack   = NULL,
                                            modFormula = NULL,
                                            ntrees     = 500),
-                         parallel = FALSE#,
-                         # mc.cores = mc.cores,
-                         ) {
+                         parallel = FALSE,
+                         noCores = 2
+) {
+  if(parallel == TRUE) {
+    requireNamespace("parallel")
+    requireNamespace("foreach")
+    # requireNamespace("doSNOW")
+    requireNamespace("doParallel")
+  }
 
   ##############################################################################
   ### tidy up names
@@ -111,87 +122,108 @@ sdmProfiling <- function(unsampledCoords,
   unsampledCoords <- unsampledCoords[, c("x", "y")]
 
   ##############################################################################
-  ## data storage - vector of sum standardised difference from original SDM
-  diff0 <- rep(NA, nrow(unsampledCoords))
-  diff1 <- rep(NA, nrow(unsampledCoords))
-
-  ##############################################################################
   ### run profiling on unsampled points
   if(parallel == FALSE) {
     pb <- txtProgressBar(min = 0, max = nrow(unsampledCoords), style = 3)
 
+    ##############################################################################
+    ## data storage - vector of sum standardised difference from original SDM
+    diff0 <- rep(NA, nrow(unsampledCoords))
+    diff1 <- rep(NA, nrow(unsampledCoords))
+
     ### loop through unsampled coords and run SDM each as presence and absence
     for(cell in 1:nrow(unsampledCoords)) {
+      ##########################################################################
+      ### profile cell with point changed point to absenceand presence
+
+      diffs <- profileCell(cell            = cell, #rownumber of unsampledCoords
+                           sampledCoords   = sampledCoords,
+                           unsampledCoords = unsampledCoords,
+                           origSDM         = origSDM,
+                           sdmFunArgs      = sdmFunArgs,
+                           sdmFun          = sdmFun)
 
       ##########################################################################
-      ### change point to absence and run new SDM
+      ### change point to presence, run new SDM and calculate absolute deviance
 
-      ### add unsampled cell as absence to the data frame
-      coords0 <- rbind(sampledCoords,
-                       data.frame(presence = 0,
-                                  x = unsampledCoords[cell, "x"],
-                                  y = unsampledCoords[cell, "y"]))
-
-      ### change the first list element to the new coordinates
-      sdmFunArgs0 <- sdmFunArgs
-      sdmFunArgs0[[1]] <- coords0
-
-      ### call SDM function
-      pred0 <- do.call(sdmFun, sdmFunArgs0)
-
-      ##########################################################################
-      ## change point to presence and run new SDM
-
-      ### add unsampled cell as presence to the data frame
-      coords1 <- rbind(sampledCoords,
-                       data.frame(presence = 1,
-                                  x = unsampledCoords[cell, "x"],
-                                  y = unsampledCoords[cell, "y"]))
-
-      ### change the first list element to the new coordinates
-      sdmFunArgs1 <- sdmFunArgs
-      sdmFunArgs1[[1]] <- coords1
-
-      ### call SDM function
-      pred1 <- do.call(sdmFun, sdmFunArgs1)
-
-      ##########################################################################
-      ### calculate deviance from original SDM and save to storage
-
-      dev0 <- abs(pred0@data@values - origSDM@data@values)
-      dev1 <- abs(pred1@data@values - origSDM@data@values)
-      dev0 <- dev0[!is.na(dev0)]
-      dev1 <- dev1[!is.na(dev1)]
-
-      ##########################################################################
-      ### Save to storage
-
-      diff0[cell] <- sum(as.vector(dev0), na.rm = TRUE)
-      diff1[cell] <- sum(as.vector(dev1), na.rm = TRUE)
+      diff0[cell] <- diffs$cellDiff0
+      diff1[cell] <- diffs$cellDiff1
 
       setTxtProgressBar(pb, cell)
     }
   }
-  #
-  # if(parallel == TRUE) {
-  #   source("parallel_profiling.R")
-  #   require(parallel)
-  #   require(parallelsugar)
-  #
-  #   all.cells <- 1:length(unsampledCoords[, 1])
-  #   both <- mclapply(all.cells,
-  #                    function(x) {parallel_profiling(cell             = x,
-  #                                                    unsampledCoords = unsampledCoords,
-  #                                                    sampledCoords   = sampledCoords,
-  #                                                    original_SDM     = original_SDM,
-  #                                                    envStack        = envStack,
-  #                                                    regform          = regform,
-  #                                                    ntrees           = ntrees)},
-  #                    mc.cores = mc.cores)
-  #   both <- unlist(both)
-  #   diff0 <- both[names(both) == "diff0"]
-  #   diff1 <- both[names(both) == "diff1"]
-  # }
+
+  if(parallel == TRUE) {
+    ## calculate number of cores and set as appropriate
+    noCoresToUse <- parallel::detectCores()
+    noCoresToUse <- ifelse(noCoresToUse < noCores, noCoresToUse, noCores)
+
+    ### initiate cluster
+    cl <- parallel::makeCluster(noCoresToUse)
+    doSNOW::registerDoSNOW(cl)
+
+    ### set up progress bar using doSNOW (from stackoverflow.com
+    ### how-do-you-create-a-progress-bar-when-using-the-foreach-function-in-r)
+    pb <- txtProgressBar(1, nrow(unsampledCoords), style = 3)
+    progress <- function(n) setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
+
+    diffs <- foreach::foreach(
+      cell = 1:nrow(unsampledCoords),
+      .combine = rbind,
+      .options.snow = opts,
+      .packages = c("sdmProfiling")) %dopar% {
+        profileCell(cell            = cell, # rownumber of unsampledCoords
+                    sampledCoords   = sampledCoords,
+                    unsampledCoords = unsampledCoords,
+                    origSDM         = origSDM,
+                    sdmFunArgs      = sdmFunArgs,
+                    sdmFun          = sdmFun)
+      }
+
+    ### stop cluster
+    close(pb)
+    parallel::stopCluster(cl)
+
+
+    # ### initiate cluster
+    # cl <- parallel::makeCluster(noCoresToUse)
+    # doParallel::registerDoParallel(cl)
+    #
+    # diffs <- foreach::foreach(
+    #   cell = 1:nrow(unsampledCoords),
+    #   .combine = rbind,
+    #   .packages = c("sdmProfiling")) %dopar% {
+    #     profileCell(cell            = cell, # rownumber of unsampledCoords
+    #                 sampledCoords   = sampledCoords,
+    #                 unsampledCoords = unsampledCoords,
+    #                 origSDM         = origSDM,
+    #                 sdmFunArgs      = sdmFunArgs,
+    #                 sdmFun          = sdmFun)
+    #   }
+    #
+    # ### stop cluster
+    # parallel::stopCluster(cl)
+
+
+    ### extract results
+    diff0 <- as.vector(unlist(diffs[, "cellDiff0"]))
+    diff1 <- as.vector(unlist(diffs[, "cellDiff1"]))
+
+    # all.cells <- 1:length(unsampled_coords[, 1])
+    # both <- mclapply(all.cells,
+    #                  function(x) {parallel_profiling(cell             = x,
+    #                                                  unsampled_coords = unsampledCoords,
+    #                                                  sampled_coords   = sampledCoords,
+    #                                                  original_SDM     = origSDM,
+    #                                                  env.stack        = envStack,
+    #                                                  regform          = modFormula,
+    #                                                  ntrees           = ntrees)},
+    #                  mc.cores = mc.cores)
+    # both <- unlist(both)
+    # diff0 <- both[names(both) == "diff0"]
+    # diff1 <- both[names(both) == "diff1"]
+  }
 
   ##############################################################################
   ### standardise differences

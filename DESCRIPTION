@@ -13,6 +13,7 @@ LazyData: true
 Depends:
     raster (>= 2.4-20)
 Imports:
+    foreach,
     ggplot2,
     gridExtra,
     gstat,
