@@ -99,7 +99,8 @@ profile <- sdmProfiling(unsampledCoords = unsampPts,
                         sdmFunArgs      = list(samples    = NULL,
                                                envStack   = envSet,
                                                modFormula = form,
-                                               ntrees     = 100))
+                                               ntrees     = 100),
+                        parallel = FALSE)
 
 ###
 leveragePlot(profile = profile, origSDM = spMod, plot_type = "raster",
@@ -122,7 +123,8 @@ profile <- sdmProfiling(unsampledCoords = unsampPts,
                         sdmFunArgs      = list(samples    = NULL,
                                                envStack   = envSet,
                                                modFormula = form,
-                                               ntrees     = 100))
+                                               ntrees     = 100),
+                        parallel = FALSE)
 
 leveragePlot(profile = profile, origSDM = spMod,
             leverage_type = "presence_leverage",

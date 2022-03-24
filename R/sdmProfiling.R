@@ -87,13 +87,16 @@
 #'                         sdmFunArgs      = list(samples    = NULL,
 #'                                                envStack   = envSet,
 #'                                                modFormula = form,
-#'                                                ntrees     = 50))
+#'                                                ntrees     = 50),
+#'                         parallel = FALSE)
 #'
 ################################################################################
 
 #' @export
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @importFrom foreach `%dopar%`
+#' @importFrom parallel makeCluster stopCluster
+#' @importFrom doSNOW registerDoSNOW
 sdmProfiling <- function(unsampledCoords,
                          sampledCoords,
                          origSDM,
@@ -109,8 +112,8 @@ sdmProfiling <- function(unsampledCoords,
   if(parallel == TRUE) {
     requireNamespace("parallel")
     requireNamespace("foreach")
-    # requireNamespace("doSNOW")
-    requireNamespace("doParallel")
+    requireNamespace("doSNOW")
+    # requireNamespace("doParallel")
   }
 
   ##############################################################################

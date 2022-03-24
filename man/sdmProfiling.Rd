@@ -110,7 +110,8 @@ profile <- sdmProfiling(unsampledCoords = unsampPts,
                         sdmFunArgs      = list(samples    = NULL,
                                                envStack   = envSet,
                                                modFormula = form,
-                                               ntrees     = 50))
+                                               ntrees     = 50),
+                        parallel = FALSE)
 
 }
 \author{
