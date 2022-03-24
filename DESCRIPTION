@@ -1,11 +1,10 @@
 Package: sdmProfiling
 Type: Package
-Title: What the Package Does (Title Case)
+Title: A Spatially-explicit Species Distribution Model Evaluation Tool
 Version: 0.2.0
 Author: person("Charles", "Marsh", role = c("aut", "cre"), comment = c(ORCID="0000-0002-0281-3115")),
 Maintainer: Charlie Marsh <charlie.marsh@mailbox.org>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: A spatially-explicit sensitivity analysis for species distribution models - SDM profiling - which seeks to assess the leverage that sampled or unsampled cells have on the overall model.
 License: GPL (>= 3)
 Encoding: UTF-8
 URL: https://github.com/charliem2003/sdmProfiling
