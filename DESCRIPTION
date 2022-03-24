@@ -1,7 +1,7 @@
 Package: sdmProfiling
 Type: Package
 Title: What the Package Does (Title Case)
-Version: 0.1.0
+Version: 0.2.0
 Author: person("Charles", "Marsh", role = c("aut", "cre"), comment = c(ORCID="0000-0002-0281-3115")),
 Maintainer: Charlie Marsh <charlie.marsh@mailbox.org>
 Description: More about what it does (maybe more than one line)
@@ -13,6 +13,7 @@ LazyData: true
 Depends:
     raster (>= 2.4-20)
 Imports:
+    doSNOW,
     foreach,
     ggplot2,
     gridExtra,

@@ -71,7 +71,8 @@
 #'                         sdmFunArgs      = list(samples    = NULL,
 #'                                                envStack   = envSet,
 #'                                                modFormula = form,
-#'                                                ntrees     = 100))
+#'                                                ntrees     = 100),
+#'                         parallel = FALSE)
 #'
 #' ### simple plot of points
 #' rgbPlot(profile = profile, origSDM = spMod)
